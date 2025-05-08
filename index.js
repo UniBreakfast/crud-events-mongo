@@ -1,52 +1,93 @@
-const connectToMongoDB = require('./dbConnection')
-const createEventMaster = require('./eventMaster')
-const createServer = require('./server')
+const { connect } = require('./core/connect')
+const { useDB } = require('./core/db')
+const { startServer } = require('./core/server')
+
+const PORT = process.env.PORT || 3000
+// For a single node instance (if it's configured as a replica set of one member):
+// Or, if using a cloud provider, use their connection string.
+// Ensure MongoDB is running as a replica set for Change Streams.
+// e.g. for local: 'mongodb://localhost:27017/event_manager?replicaSet=rs0'
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/event_manager'
+
 
 async function main() {
-  // Connect to MongoDB and get the mongoose instance
-  const mongoose = await connectToMongoDB()
+  const mongooseInstance = await connect(MONGO_URI)
+  
+  const db = useDB(mongooseInstance)
+  const server = startServer(PORT, 'public')
 
-  // Create the eventMaster instance
-  const eventMaster = createEventMaster(mongoose)
-
-  // Create and start the Express server
-  const app = createServer(eventMaster)
-  const PORT = 3000
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`)
+  // API Routes
+  server.handleRequest('POST', '/api/events', async (body) => {
+    return db.createEvent(body)
   })
 
-  // Test CRUD operations
-  try {
-    // Test Add
-    const newEvent = await eventMaster.add({
-      userId: "12345",
-      title: "Test Event",
-      startDate: new Date("2023-10-15T14:00:00Z"),
-      endDate: new Date("2023-10-15T15:00:00Z"),
-      description: "Testing add method"
-    })
-    console.log('Added event:', newEvent._id.toString())
+  server.handleRequest('GET', '/api/events', async () => {
+    return db.getAllEvents()
+  })
 
-    // Test Update
-    const updatedEvent = await eventMaster.update(newEvent._id, { title: "Updated Test Event" })
-    console.log('Updated event:', updatedEvent.title)
+  server.handleRequest('GET', '/api/events/:id', async (body, params) => {
+    const event = await db.getEventById(params.id)
+    if (!event) {
+      const error = new Error('Event not found')
+      error.name = 'NotFoundError'
+      throw error
+    }
+    return event
+  })
 
-    // Test Delete
-    const deleted = await eventMaster.delete(newEvent._id)
-    console.log('Deleted event:', deleted)
+  server.handleRequest('PUT', '/api/events/:id', async (body, params) => {
+    const updatedEvent = await db.updateEvent(params.id, body)
+    if (!updatedEvent) {
+      const error = new Error('Event not found for update')
+      error.name = 'NotFoundError'
+      throw error
+    }
+    return updatedEvent
+  })
 
-    // Keep the process alive to allow server to run
-    process.on('SIGINT', async () => {
-      await mongoose.disconnect()
-      console.log('Disconnected from MongoDB')
-      process.exit(0)
-    })
-  } catch (err) {
-    console.error('Error:', err)
-    await mongoose.disconnect()
-    process.exit(1)
-  }
+  server.handleRequest('DELETE', '/api/events/:id', async (body, params) => {
+    const deletedEvent = await db.deleteEvent(params.id)
+    if (!deletedEvent) {
+      const error = new Error('Event not found for deletion')
+      error.name = 'NotFoundError'
+      throw error
+    }
+    return // Implicitly undefined, signals server.js to send 204 No Content
+  })
+
+  // Setup SSE feeder for event changes
+  const eventUpdateFeeder = server.getFeeder('/sse/events')
+
+  db.startChangeStream((change) => {
+    let payload = {
+      operationType: change.operationType,
+      documentKey: change.documentKey, // Contains { _id: ... }
+      fullDocument: null,
+      updateDescription: null
+    }
+
+    if (change.fullDocument) {
+      payload.fullDocument = change.fullDocument.toJSON ? change.fullDocument.toJSON() : change.fullDocument
+    }
+    
+    if (change.updateDescription) {
+      payload.updateDescription = change.updateDescription
+    }
+    
+    // For delete operations, fullDocument is null, documentKey is primary identifier
+    // For insert/replace, fullDocument contains the new document
+    // For update, fullDocument contains document post-update (due to 'updateLookup')
+    // and updateDescription shows what changed.
+
+    eventUpdateFeeder(payload)
+  })
+
+  console.log(`Event Manager backend running on http://localhost:${PORT}`)
+  console.log('API endpoints available at /api/events')
+  console.log('SSE stream for events available at /sse/events')
 }
 
-main()
+main().catch(error => {
+  console.error("Fatal error during application startup:", error)
+  process.exit(1)
+})

@@ -1,74 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Event Manager</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px }
-    button { margin: 10px 0; padding: 5px 10px }
-    #logs { margin-top: 20px; padding: 10px; border: 1px solid #ccc; min-height: 100px }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>Event Manager</h1>
-  <button onclick="testCrud()">Test CRUD Operations</button>
-  <div id="logs">Listening for changes...</div>
+  <div class="container">
+    <h1>Event Manager</h1>
 
-  <script>
-    // Test CRUD operations
-    async function testCrud() {
-      try {
-        // Add a new event
-        const addResponse = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: '67890',
-            title: 'Client Meeting via API',
-            startDate: '2023-10-16T14:00:00Z',
-            endDate: '2023-10-16T15:00:00Z',
-            description: 'API test'
-          })
-        })
-        const newEvent = await addResponse.json()
-        log(`Added event: ${newEvent._id}`)
+    <div class="controls">
+      <button id="showCreateEventFormBtn">Create New Event</button>
+      <div class="view-selector">
+        <label for="viewMode">View:</label>
+        <select id="viewMode">
+          <option value="list" selected>List</option>
+          <option value="month">Month</option>
+          <option value="week">Week</option>
+          <option value="day">Day</option>
+        </select>
+        <span id="currentViewDate" class="current-view-date"></span>
+        <button id="prevViewBtn">&lt; Prev</button>
+        <button id="nextViewBtn">Next &gt;</button>
+      </div>
+    </div>
 
-        // Update the event
-        const updateResponse = await fetch(`/api/events/${newEvent._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: 'Updated Client Meeting' })
-        })
-        const updatedEvent = await updateResponse.json()
-        log(`Updated event: ${updatedEvent.title}`)
+    <div id="eventFormContainer" class="form-container" style="display:none;">
+      <h2 id="formTitle">Create Event</h2>
+      <form id="eventForm">
+        <input type="hidden" id="eventId">
+        <div>
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" required>
+        </div>
+        <div>
+          <label for="startdt">Start Date & Time:</label>
+          <input type="datetime-local" id="startdt" name="startdt" required>
+        </div>
+        <div>
+          <label for="finishdt">Finish Date & Time:</label>
+          <input type="datetime-local" id="finishdt" name="finishdt" required>
+        </div>
+        <div>
+          <label for="description">Description:</label>
+          <textarea id="description" name="description"></textarea>
+        </div>
+        <button type="submit" id="saveEventBtn">Save Event</button>
+        <button type="button" id="cancelFormBtn">Cancel</button>
+      </form>
+    </div>
 
-        // Delete the event
-        const deleteResponse = await fetch(`/api/events/${newEvent._id}`, {
-          method: 'DELETE'
-        })
-        const deleteResult = await deleteResponse.json()
-        log(`Deleted event: ${deleteResult.success}`)
-      } catch (err) {
-        log(`Error: ${err.message}`)
-      }
-    }
+    <div id="eventDisplayArea">
+      <h2>Events</h2>
+      <div id="eventList" class="event-list">
+        <!-- Events will be rendered here -->
+      </div>
+      <div id="calendarView" class="calendar-view" style="display:none;">
+        <!-- Calendar views (Month/Week/Day) will be rendered here -->
+      </div>
+    </div>
+     <div id="loadingIndicator" style="display:none;">Loading...</div>
+     <div id="errorDisplay" class="error-display"></div>
 
-    // Setup SSE to listen for changes
-    const source = new EventSource('/api/events/stream')
-    source.onmessage = (event) => {
-      const change = JSON.parse(event.data)
-      log(`Change detected: ${change.operationType} on ${change.documentKey._id}`)
-    }
-    source.onerror = () => {
-      log('SSE connection error')
-    }
+  </div>
 
-    // Helper function to log messages
-    function log(message) {
-      const logsDiv = document.getElementById('logs')
-      logsDiv.innerHTML += `<p>${message}</p>`
-    }
-  </script>
+  <script type="module" src="app.js"></script>
 </body>
+
 </html>

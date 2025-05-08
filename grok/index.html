@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Manager</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px }
+    button { margin: 10px 0; padding: 5px 10px }
+    #logs { margin-top: 20px; padding: 10px; border: 1px solid #ccc; min-height: 100px }
+  </style>
+</head>
+<body>
+  <h1>Event Manager</h1>
+  <button onclick="testCrud()">Test CRUD Operations</button>
+  <div id="logs">Listening for changes...</div>
+
+  <script>
+    // Test CRUD operations
+    async function testCrud() {
+      try {
+        // Add a new event
+        const addResponse = await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: '67890',
+            title: 'Client Meeting via API',
+            startDate: '2023-10-16T14:00:00Z',
+            endDate: '2023-10-16T15:00:00Z',
+            description: 'API test'
+          })
+        })
+        const newEvent = await addResponse.json()
+        log(`Added event: ${newEvent._id}`)
+
+        // Update the event
+        const updateResponse = await fetch(`/api/events/${newEvent._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: 'Updated Client Meeting' })
+        })
+        const updatedEvent = await updateResponse.json()
+        log(`Updated event: ${updatedEvent.title}`)
+
+        // Delete the event
+        const deleteResponse = await fetch(`/api/events/${newEvent._id}`, {
+          method: 'DELETE'
+        })
+        const deleteResult = await deleteResponse.json()
+        log(`Deleted event: ${deleteResult.success}`)
+      } catch (err) {
+        log(`Error: ${err.message}`)
+      }
+    }
+
+    // Setup SSE to listen for changes
+    const source = new EventSource('/api/events/stream')
+    source.onmessage = (event) => {
+      const change = JSON.parse(event.data)
+      log(`Change detected: ${change.operationType} on ${change.documentKey._id}`)
+    }
+    source.onerror = () => {
+      log('SSE connection error')
+    }
+
+    // Helper function to log messages
+    function log(message) {
+      const logsDiv = document.getElementById('logs')
+      logsDiv.innerHTML += `<p>${message}</p>`
+    }
+  </script>
+</body>
+</html>
