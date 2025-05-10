@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- This is NOT the main page index.html file, it's only the project description index.html file put in the repo root to be displayed on the github pages. And the main page index.html file is in the public folder -->
+
   <title>Event Manager: Project Description</title>
 
   <style>
@@ -26,12 +28,6 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
-    h1 {
-      color: #333;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
     details {
       background: #f9f9f9;
       border: 1px solid #ddd;
@@ -41,11 +37,9 @@
     }
 
     summary {
-      font-weight: bold;
       cursor: pointer;
       padding: 5px;
       outline: none;
-      /* Removes the default focus outline which can be distracting */
     }
 
     summary:hover {
@@ -58,45 +52,21 @@
     }
 
     h2 {
-      /* For section titles within details, if needed, though summary often suffices */
-      margin-top: 0;
-      color: #555;
-      font-size: 1.5em;
-    }
-
-    h3 {
-      color: #444;
-      font-size: 1.2em;
-      margin-top: 20px;
+      display: inline-block;
+      margin: 0;
     }
 
     ul {
       padding-left: 20px;
     }
 
-    li {
-      margin-bottom: 5px;
-    }
-
     pre {
       background: #2d2d2d;
-      /* Dark background for code blocks */
       color: #f8f8f2;
-      /* Light text for contrast */
       padding: 15px;
       border-radius: 4px;
       overflow-x: auto;
-      /* Allow horizontal scrolling for long lines */
-      font-family: 'Courier New', Courier, monospace;
       font-size: 0.9em;
-    }
-
-    code {
-      font-family: 'Courier New', Courier, monospace;
-    }
-
-    p {
-      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -106,7 +76,7 @@
     <h1>Event Manager Web Application: Project Description</h1>
 
     <details>
-      <summary>1. Overview</summary>
+      <summary><h2>1. Overview</h2></summary>
 
       <div>
         <p>The Event Manager is a single-page web application (SPA) designed for a single user to efficiently create, view, update, and delete events. Each event will be characterized by its start and finish times, a title, and a detailed description. The application aims to provide a seamless and intuitive user experience with a focus on clear information presentation, straightforward event management, and real-time updates.</p>
@@ -114,7 +84,7 @@
     </details>
 
     <details>
-      <summary>2. Core Functionality</summary>
+      <summary><h2>2. Core Functionality</h2></summary>
 
       <div>
         <ul>
@@ -148,7 +118,7 @@
     </details>
 
     <details>
-      <summary>3. Technology Stack</summary>
+      <summary><h2>3. Technology Stack</h2></summary>
 
       <div>
         <p>The project leverages a modern JavaScript-centric stack with a local MongoDB database configured as a replica set.</p>
@@ -188,7 +158,7 @@
     </details>
 
     <details>
-      <summary>4. Architectural Principles</summary>
+      <summary><h2>4. Architectural Principles</h2></summary>
 
       <div>
         <ul>
@@ -232,30 +202,32 @@
     </details>
 
     <details>
-      <summary>5. Project Directory Structure</summary>
+      <summary><h2>5. Project Directory Structure</h2></summary>
 
       <div>
         <p>The project will be organized within a root folder named <code>crude-events-mongo</code>.</p>
-        <pre><code>crude-events-mongo/
-├── core/                  # Backend modules and logic
+        <pre><code
+>📂crude-events-mongo/
+├── 📂core/                # Backend modules and logic
 │   ├── connect.js         # Mongoose connection setup (exports 'connect' function)
 │   ├── db.js              # Exports 'useDB' function (takes mongoose, returns 'db' object with models/logic/changestream setup)
 │   ├── server.js          # Exports 'startServer' function (takes port; starts server, returns 'server' object with request/SSE methods, serves static files)
 │   └── ...                # Other backend modules as needed
-├── public/                # Frontend assets, served statically
-│   ├── js/                # Frontend JavaScript modules
+├── 📂public/              # Frontend assets, served statically
+│   ├── 📂js/              # Frontend JavaScript modules
 │   │   ├── client.js      # Client-side API interaction and SSE listener logic (exports 'client' object)
 │   │   └── ui.js          # DOM manipulation and UI components (exports 'ui' object)
 │   ├── app.js             # Main frontend JavaScript file (wires 'ui.js', 'client.js')
 │   ├── index.html         # Main HTML file for the SPA
 │   └── style.css          # CSS styles for the application
 ├── index.js               # Main backend entry point (wires modules, configures server, starts server)
-└── package.json           # Project metadata and dependencies</code></pre>
+└── package.json           # Project metadata and dependencies
+</code></pre>
       </div>
     </details>
 
     <details>
-      <summary>6. Module Interaction and Wiring</summary>
+      <summary><h2>6. Module Interaction and Wiring</h2></summary>
 
       <div>
         <h3>Backend (<code>index.js</code> in root):</h3>
